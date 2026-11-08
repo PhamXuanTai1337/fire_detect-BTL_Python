@@ -1,0 +1,2 @@
+# For Kaggle / modern Python, first run tools/setup_kaggle.py (see KAGGLE.md).
+-r requirements/runtime.txt

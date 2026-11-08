@@ -1,0 +1,14 @@
+mmcv==1.6.2
+yapf==0.40.1
+numpy>=1.24,<3
+Pillow>=10
+opencv-python-headless>=4.8,<5
+packaging
+addict
+PyYAML
+prettytable
+matplotlib
+timm==1.0.31
+requests
+tqdm
+psutil
