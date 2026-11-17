@@ -12,6 +12,7 @@ from mmcv.runner import (HOOKS, DistSamplerSeedHook, EpochBasedRunner,
 from mmcv.utils import build_from_cfg
 
 from mmseg import digit_version
+from mmseg.smoke_checkpoint import validate_initialization, load_smoke_checkpoint
 from mmseg.core import DistEvalHook, EvalHook, build_optimizer
 from mmseg.core.runner import FoSpIterBasedRunner
 from mmseg.datasets import build_dataloader, build_dataset
@@ -78,6 +79,7 @@ def train_segmentor(model,
                     meta=None):
     """Launch segmentor training."""
     logger = get_root_logger(cfg.log_level)
+    validate_initialization(cfg)
 
     # prepare data loaders
     dataset = dataset if isinstance(dataset, (list, tuple)) else [dataset]
@@ -198,5 +200,9 @@ def train_segmentor(model,
     if cfg.resume_from:
         runner.resume(cfg.resume_from)
     elif cfg.load_from:
-        runner.load_checkpoint(cfg.load_from)
+        if cfg.get('require_explicit_initialization', False):
+            report = load_smoke_checkpoint(model, cfg.load_from, allow_new_modules=True)
+            logger.info('Finetune weight migration (fresh optimizer): %s', report)
+        else:
+            runner.load_checkpoint(cfg.load_from)
     runner.run(data_loaders, cfg.workflow)

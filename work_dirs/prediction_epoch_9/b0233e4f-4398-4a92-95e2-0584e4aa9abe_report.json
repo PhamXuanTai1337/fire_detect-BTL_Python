@@ -1,0 +1,49 @@
+{
+  "checkpoint": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\BTL-Python\\epoch_9\\best.pth",
+  "image": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\BTL-Python\\test\\b0233e4f-4398-4a92-95e2-0584e4aa9abe.jpg",
+  "checkpoint_epoch_zero_based": 8,
+  "strict_load": true,
+  "device": "cuda:0",
+  "input_size": [
+    512,
+    512
+  ],
+  "output_size": [
+    1000,
+    562
+  ],
+  "threshold": 0.4,
+  "mask_values": {
+    "background": 0,
+    "smoke": 255
+  },
+  "smoke_pixels": 164601,
+  "total_pixels": 562000,
+  "smoke_fraction": 0.29288434163701066,
+  "inference_seconds": 2.6188844999996945,
+  "checkpoint_validation": {
+    "foreground_iou": 0.8490995770204699,
+    "recall": 0.9216735777692614,
+    "f1": 0.9183924841826625,
+    "tp": 7082596,
+    "fp": 656807,
+    "fn": 601899,
+    "n_images": 468,
+    "threshold": 0.4,
+    "aggregation": "global_pixels",
+    "image_mean": {
+      "foreground_iou": 0.7498755114696739,
+      "recall": 0.8206801153888614,
+      "f1": 0.8172731577354753
+    }
+  },
+  "image_evaluation": null,
+  "evaluation_note": "No ground-truth mask supplied; IoU/F1/recall cannot be computed for this image. checkpoint_validation refers to the saved validation dataset, not this image.",
+  "outputs": {
+    "mask": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\model\\work_dirs\\prediction_epoch_9\\b0233e4f-4398-4a92-95e2-0584e4aa9abe_mask.png",
+    "overlay": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\model\\work_dirs\\prediction_epoch_9\\b0233e4f-4398-4a92-95e2-0584e4aa9abe_overlay.png",
+    "probability": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\model\\work_dirs\\prediction_epoch_9\\b0233e4f-4398-4a92-95e2-0584e4aa9abe_probability.npy",
+    "preview": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\model\\work_dirs\\prediction_epoch_9\\b0233e4f-4398-4a92-95e2-0584e4aa9abe_preview.jpg",
+    "report": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\model\\work_dirs\\prediction_epoch_9\\b0233e4f-4398-4a92-95e2-0584e4aa9abe_report.json"
+  }
+}

@@ -20,6 +20,7 @@ from mmseg import __version__
 from mmseg.apis import init_random_seed, set_random_seed, train_segmentor
 from mmseg.datasets import build_dataset
 from mmseg.models import build_segmentor
+from mmseg.smoke_checkpoint import validate_initialization
 from mmseg.utils import (collect_env, get_device, get_root_logger,
                          setup_multi_processes)
 import numpy as np
@@ -29,6 +30,8 @@ import random
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a segmentor')
     parser.add_argument('config', help='train config file path')
+    parser.add_argument('--initialization', choices=['pretrained', 'finetune', 'resume'],
+                        help='Required for small-smoke training: new training, weights only, or full resume.')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
         '--load-from', help='the checkpoint file to load weights from')
@@ -137,6 +140,14 @@ def main():
         cfg.load_from = args.load_from
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
+    if args.initialization is not None:
+        cfg.initialization = args.initialization
+    cfg.auto_resume = args.auto_resume
+    validate_initialization(cfg)
+    if cfg.get('require_explicit_initialization') and cfg.initialization != 'pretrained':
+        # Existing backbone weights come from the selected FoSp checkpoint.
+        cfg.model.pretrained = None
+        cfg.model.backbone.pop('init_cfg', None)
     if os.name == 'nt':
         for key in ('work_dir', 'load_from', 'resume_from'):
             if cfg.get(key):

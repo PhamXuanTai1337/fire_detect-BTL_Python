@@ -6,7 +6,9 @@ của một lượt train đầy đủ; đừng coi kiểm tra chạy được l
 
 ## File đưa lên GitHub
 
-Dùng **nội dung bên trong `FoSp-main/FoSp-main/` làm gốc repository**:
+Dùng **nội dung thư mục FoSp chứa `config/`, `mmseg/` làm gốc repository**.
+Nếu repository của bạn chứa thêm tầng `FoSp-main/`, chuyển vào tầng đó trước khi
+chạy các lệnh dưới đây:
 
 ```text
 config/
@@ -25,6 +27,7 @@ FULL_MAT.md
 KAGGLE.md
 LICENSE
 kaggle_train.ipynb
+run_fit_test.py
 ```
 
 Không đưa `pretrained/`, `data/`, `work_dirs/`, `.venv-mat/`, cache hay file
@@ -52,6 +55,9 @@ Thay URL repo của bạn rồi chạy từng cell:
 ```python
 !git clone https://github.com/YOUR_NAME/YOUR_REPO.git /kaggle/working/FoSp
 %cd /kaggle/working/FoSp
+from pathlib import Path
+if not Path('config/fosp_kaggle.py').is_file():
+    %cd FoSp-main
 !python -m venv --system-site-packages /kaggle/working/fosp-venv
 !/kaggle/working/fosp-venv/bin/python tools/setup_kaggle.py
 ```
@@ -165,3 +171,29 @@ trong lần rà soát này. Không tự động bật AMP hoặc huấn luyện 
 
 Chưa thực thi trực tiếp trên tài khoản Kaggle của bạn; môi trường, dataset và
 thời gian phiên thực tế cần được xác nhận bằng lệnh kiểm tra ở bước 3.
+
+## Overfit test 32 ảnh / 50 epoch với Pyro-SDIS
+
+Chạy `python run_fit_test.py`. Script đã có đường dẫn Windows của dataset người
+dùng và mặc định dùng 32 ảnh có khói từ `images/train`, seed 2077. Box YOLO class
+0 được tô thành mask nhãn 1; ngoài box là 0. Đây là mask tạm, không phải biên khói
+thật. Train và evaluation cố ý dùng cùng 32 ảnh để kiểm tra khả năng ghi nhớ.
+
+Batch 1, 50 epoch = 1.600 optimizer steps, không augmentation/dropout/warmup,
+learning rate cố định, weight decay 0. MAT pretrained đủ hai stage được đóng băng;
+MiT-B3 pretrained được tự tải lần đầu nếu chưa có cache.
+Validation mỗi 32 steps, checkpoint định kỳ mỗi 5 epoch; best theo `IoU.smoke`
+(trong bài này chỉ là IoU của box mask). Kết quả ở `work_dirs/fit_test_32/`, có
+`selected_images.json`, `fit_config.py`, log và `history.csv` khi kết thúc/dừng.
+
+```bash
+python run_fit_test.py --prepare-only
+python run_fit_test.py
+python run_fit_test.py --resume
+```
+
+Trên Kaggle, đổi nguồn dữ liệu và output:
+
+```bash
+python run_fit_test.py --data-root /kaggle/input/YOUR_DATASET/unpack --work-dir /kaggle/working/fit_test_32 --mat-checkpoint /kaggle/input/YOUR_WEIGHTS/Places_512_FullData.pkl
+```

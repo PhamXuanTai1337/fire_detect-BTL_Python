@@ -9,16 +9,21 @@ import numpy as np
 import PIL.Image
 from mat_inpainter import FullMATInpainter
 from torchvision.transforms import transforms 
+from mmseg.smoke_crops import CropSelectorHead
 
 @HEADS.register_module()
 class FOSP(BaseDecodeHead):
     def __init__(self, interpolate_mode='bilinear', focus_threshold=0.85,
                  mat_checkpoint=None, mat_seed=240, mat_noise_mode='const',
-                 mat_impl='cuda', **kwargs):
+                 mat_impl='cuda', shallow_fusion=False, crop_selector=False,
+                 selector_channels=32, **kwargs):
         super().__init__(input_transform='multiple_select', **kwargs)
 
         self.interpolate_mode = interpolate_mode
         self.focus_threshold = focus_threshold
+        self.shallow_fusion = shallow_fusion
+        if crop_selector:
+            self.selector_head = CropSelectorHead(self.in_channels[0], selector_channels)
         num_inputs = len(self.in_channels)
 
         assert num_inputs == len(self.in_index)
@@ -55,6 +60,14 @@ class FOSP(BaseDecodeHead):
             norm_cfg=self.norm_cfg)
 
         self.cls_seg_1_4 = nn.Conv2d(self.in_channels[0], 1, kernel_size=1)
+        if shallow_fusion:
+            # Additional F_4^O path; existing cascade layers keep their shapes.
+            self.shallow_projection = ConvModule(
+                self.in_channels[0], self.channels, kernel_size=3, padding=1,
+                norm_cfg=self.norm_cfg, act_cfg=self.act_cfg)
+            self.shallow_fusion_conv = ConvModule(
+                self.channels * 2, self.channels, kernel_size=1,
+                norm_cfg=self.norm_cfg, act_cfg=self.act_cfg)
         self.cls_seg_1_8 = nn.Conv2d(self.in_channels[1] * 2, 1, kernel_size=1)
         self.cls_seg_1_16 = nn.Conv2d(self.in_channels[2] * 2, 1, kernel_size=1)
         self.cls_seg_1_32 = nn.Conv2d(self.in_channels[3], 1, kernel_size=1)
@@ -148,9 +161,15 @@ class FOSP(BaseDecodeHead):
         mask_512 = torch.as_tensor(mask_512)
         return mask_512
 
+    def forward_focus(self, inputs):
+        """BCG only: no MAT, Separation or segmentation Fusion calls."""
+        return self.BCG(self._transform_inputs(inputs))
+
     def forward(self, inputs, origin_img):
         num_inputs = len(self.in_channels)
         inputs = self._transform_inputs(inputs)
+        # First transformer stage, stride 4, before Focus modifies features.
+        shallow_original = inputs[0]
 
         ###### Focus: Bidirectional Cascade Generator (BCG) ######
         focus_map, focus_map_logits, out_1_4, out_1_8, out_1_16, out_1_32 = self.BCG(inputs)
@@ -208,5 +227,11 @@ class FOSP(BaseDecodeHead):
                 temp_feature_map = conv(x)
 
         out = self.fusion_final_conv(temp_feature_map)
+        if self.shallow_fusion:
+            shallow = self.shallow_projection(shallow_original)
+            shallow = resize(shallow, size=out.shape[2:],
+                             mode=self.interpolate_mode,
+                             align_corners=self.align_corners)
+            out = self.shallow_fusion_conv(torch.cat([out, shallow], dim=1))
         out = self.cls_fusion_seg(out)
         return out, [out_1_4, out_1_8, out_1_16, out_1_32, focus_map_logits]

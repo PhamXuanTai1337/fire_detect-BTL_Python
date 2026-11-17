@@ -5,8 +5,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORIES = ('config', 'mmseg', 'mat_inpainter', 'tools', 'requirements', 'tests', 'imgs')
-FILES = ('.gitignore', 'setup.py', 'pyproject.toml', 'requirements.txt', 'README.md', 'FULL_MAT.md',
-         'KAGGLE.md', 'LICENSE', 'kaggle_train.ipynb')
+FILES = ('.gitignore', 'setup.py', 'pyproject.toml', 'requirements.txt', 'FULL_MAT.md',
+         'KAGGLE.md', 'LICENSE', 'kaggle_train.ipynb', 'run_fit_test.py')
 
 
 def main():
@@ -14,6 +14,8 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT.parent / 'fosp_mat_github.zip')
     args = parser.parse_args()
     paths = [ROOT / name for name in FILES]
+    if (ROOT / 'README.md').is_file():
+        paths.append(ROOT / 'README.md')
     for name in DIRECTORIES:
         paths.extend(path for path in (ROOT / name).rglob('*') if path.is_file()
                      and not {'__pycache__', '.pytest_cache', '.mim'}.intersection(path.parts)

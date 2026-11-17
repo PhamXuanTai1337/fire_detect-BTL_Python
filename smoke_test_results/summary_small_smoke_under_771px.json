@@ -1,0 +1,20 @@
+{
+  "checkpoint": "C:\\Users\\User\\OneDrive\\Documents\\bai_tap\\Python\\BTL-Python\\epoch_9\\best.pth",
+  "threshold": 0.4,
+  "smoke_px_threshold": 771,
+  "n_images": 600,
+  "global_pixel": {
+    "foreground_iou": 0.098657,
+    "recall": 0.101959,
+    "f1": 0.179596,
+    "precision": 0.752868,
+    "tp": 18443,
+    "fp": 6054,
+    "fn": 162443
+  },
+  "per_image_mean": {
+    "foreground_iou": 0.048665,
+    "recall": 0.057965,
+    "f1": 0.06803
+  }
+}

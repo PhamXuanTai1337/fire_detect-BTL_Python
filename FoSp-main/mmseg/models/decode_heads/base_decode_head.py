@@ -262,16 +262,14 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         
         seg_logits, hierarchical_seg_logits= self.forward(inputs, origin_img)
         losses = self.losses(seg_logits, gt_semantic_seg)
-        losses_1_4 = self.losses(hierarchical_seg_logits[0], gt_semantic_seg)
-        losses_1_8 = self.losses(hierarchical_seg_logits[1], gt_semantic_seg)
-        losses_1_16 = self.losses(hierarchical_seg_logits[2], gt_semantic_seg)
-        losses_1_32 = self.losses(hierarchical_seg_logits[3], gt_semantic_seg)
-        losses_hiera_mask = self.losses(hierarchical_seg_logits[4], gt_semantic_seg)
-        loss_name = self.loss_decode.loss_name
-        losses[loss_name] = 0.5 * losses[loss_name] \
-                            + 0.1 * losses_1_4[loss_name] + 0.1 * losses_1_8[loss_name] \
-                            + 0.1 * losses_1_16[loss_name] + 0.1 * losses_1_32[loss_name] \
-                            + 0.1 * losses_hiera_mask[loss_name] \
+        auxiliary_losses = [self.losses(logits, gt_semantic_seg)
+                            for logits in hierarchical_seg_logits]
+        # Preserve final/auxiliary weights for every loss, including ModuleList.
+        # Accuracy describes the final head only and never enters backward.
+        for name in list(losses):
+            if name.startswith('loss_'):
+                losses[name] = 0.5 * losses[name] + sum(
+                    0.1 * item[name] for item in auxiliary_losses)
         
         return losses
     

@@ -31,7 +31,7 @@ class FoSpIterBasedRunner(IterBasedRunner):
                 mmcv.symlink(filename, osp.join(out_dir, 'latest.pth'))
 
     def resume(self, checkpoint, resume_optimizer=True, map_location='cpu'):
-        state = self.load_checkpoint(checkpoint, map_location=map_location)
+        state = self.load_checkpoint(checkpoint, map_location=map_location, strict=True)
         metadata = state['meta']
         self._epoch = metadata['epoch']
         self._iter = metadata['iter']
